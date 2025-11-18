@@ -1326,6 +1326,12 @@
       </div>
     </div>
 
+    <!-- Online users (admins only) -->
+    <div id="onlinePresence" style="margin-top:12px; display:none; font-size:12px; color:var(--muted);">
+      <div style="font-weight:600;margin-bottom:4px;">Online now: <span id="onlineCount">0</span></div>
+      <div id="onlineList" style="max-height:140px;overflow-y:auto;font-size:11px;"></div>
+    </div>
+
     <!-- Dark mode toggle -->
     <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(229,231,235,1);font-size:13px;color:var(--muted);">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
@@ -2000,11 +2006,95 @@ let whitelistRoleFilterValue = 'all';
 let whitelistValidityFilterValue = 'all';
 let whitelistSortBy = 'name';
 
+// Online presence UI
+const onlinePresenceEl = document.getElementById('onlinePresence');
+const onlineCountEl = document.getElementById('onlineCount');
+const onlineListEl = document.getElementById('onlineList');
+let presenceRef = null;
+let onlineRef = null;
+
+// Gallery refs removed
+
 /* =========================
    Utility helpers
    ========================= */
 function encodeEmailKey(email){ return encodeURIComponent((email||'').toLowerCase()); }
 function escapeHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// Presence tracking for online users
+function startPresenceTracking(email, role){
+  try{
+    if(!rtdb || !email) return;
+    const key = encodeEmailKey(email);
+    const ref = rtdb.ref('presence/' + key);
+    presenceRef = ref;
+    const displayName = localStorage.getItem('go_displayName') || (email.split('@')[0] || 'User');
+    const effectiveRole = (role || getSessionRole() || 'user');
+    ref.onDisconnect().remove().catch(()=>{});
+    ref.set({
+      email,
+      displayName,
+      role: effectiveRole,
+      status: 'online',
+      view: 'Home',
+      lastActive: firebase.database.ServerValue.TIMESTAMP
+    });
+  }catch(e){ console.warn('startPresenceTracking error', e); }
+}
+
+function updatePresenceStatus(fields){
+  try{
+    if(!rtdb) return;
+    const email = getSessionEmail();
+    if(!email) return;
+    const key = encodeEmailKey(email);
+    const ref = presenceRef || rtdb.ref('presence/' + key);
+    const update = Object.assign({}, fields || {}, { lastActive: firebase.database.ServerValue.TIMESTAMP });
+    ref.update(update);
+  }catch(e){ console.warn('updatePresenceStatus error', e); }
+}
+
+function initOnlinePresenceListener(){
+  if(!onlinePresenceEl || onlineRef || !rtdb) return;
+  onlineRef = rtdb.ref('presence');
+  onlineRef.on('value', snap=>{
+    if(!onlineListEl || !onlineCountEl) return;
+    const data = snap.val() || {};
+    const arr = Object.values(data);
+    const online = arr.filter(u => u && u.status && u.status !== 'offline');
+    onlineCountEl.textContent = String(online.length);
+    if(online.length === 0){
+      onlineListEl.innerHTML = '<div class="muted">No one online.</div>';
+      return;
+    }
+    const rows = online
+      .sort((a,b)=> (b.lastActive||0) - (a.lastActive||0))
+      .map(u => {
+        const name = escapeHtml(u.displayName || u.email || 'User');
+        const status = escapeHtml(u.status || 'online');
+        const view = u.view ? ` — ${escapeHtml(u.view)}` : '';
+        return `<div style="margin-bottom:4px;"><strong>${name}</strong> · <span>${status}</span><span>${view}</span></div>`;
+      })
+      .join('');
+    onlineListEl.innerHTML = rows;
+  });
+}
+
+function setupOnlinePresence(role){
+  const email = getSessionEmail();
+  if(email){
+    startPresenceTracking(email, role);
+  }
+  const isAdmin = (role || getSessionRole() || '').toLowerCase() === 'admin';
+  if(onlinePresenceEl){
+    if(isAdmin){
+      onlinePresenceEl.style.display = 'block';
+      initOnlinePresenceListener();
+    } else {
+      onlinePresenceEl.style.display = 'none';
+    }
+  }
+}
 
 // Custom confirm overlay returning a Promise<boolean>
 function showConfirm(message){
@@ -2164,6 +2254,8 @@ if(usersViewSelect && pendingSection && whitelistSection){
     }
   });
 }
+
+// Gallery helpers removed
 
 // Wire whitelist filter/sort controls
 if(whitelistSearchInput){
@@ -2490,11 +2582,12 @@ window.updateWhitelistRole = async function(id){
     await docRef.update({ role: newRole });
     await refreshUsersLists();
   }catch(e){ console.error(e); alert('Failed to update role'); }
-};
+}
 
-/* =========================
-   Auth UI interactions
-*/
+// Gallery admin UI removed
+
+// =========================
+//   Auth UI interactions
 btnShowAuth.addEventListener('click', ()=> { authOverlay.style.display='flex'; tabRegister.click(); });
 authClose.addEventListener('click', ()=> { authOverlay.style.display='none'; });
 if(matchInfoClose && matchInfoOverlay){
@@ -2670,12 +2763,21 @@ function clearSession(){
 }
 
 btnSignOut.addEventListener('click', async ()=>{
+  const email = getSessionEmail();
   try{
     await auth.signOut();
   }catch(e){}
+  try{
+    if(email && rtdb){
+      const key = encodeEmailKey(email);
+      await rtdb.ref('presence/' + key).remove();
+    }
+  }catch(e){}
+  presenceRef = null;
   clearSession();
   updateSignedInSignedOutUI(false);
   restrictUIForRole(null);
+  if(onlinePresenceEl) onlinePresenceEl.style.display = 'none';
   if(authOverlay) authOverlay.style.display = 'flex';
 });
 
@@ -2808,6 +2910,7 @@ function applyRoleToUI(role){
   localStorage.setItem('go_currentRole', role || '');
   showUserBadge();
   restrictUIForRole(role);
+  setupOnlinePresence(role);
 }
 
 /* On page load, restore session if any in localStorage */
@@ -2820,7 +2923,9 @@ function applyRoleToUI(role){
     userEmailEl.innerText = email;
     signedInArea.style.display = 'block';
     signedOutArea.style.display = 'none';
-    restrictUIForRole(role || 'queued');
+    const effRole = role || 'queued';
+    restrictUIForRole(effRole);
+    setupOnlinePresence(effRole);
     // Do not auto-play intro on reload; only after a fresh login
   } else {
     signedInArea.style.display = 'none';
@@ -2941,6 +3046,20 @@ document.querySelectorAll('nav button[data-tab]').forEach(btn=>{
     if(window.innerWidth <= 900 && sidebarEl){
       setMobileSidebarOpen(false);
     }
+
+    // Update presence status based on current tab
+    const statusMap = {
+      home: 'Browsing home',
+      sports: 'Browsing sports',
+      scoring: 'Browsing scoring',
+      matches: 'Browsing matches',
+      live: 'Viewing live matches',
+      gallery: 'Viewing gallery',
+      about: 'Viewing about',
+      users: 'Managing users'
+    };
+    const st = statusMap[t] || 'Browsing app';
+    updatePresenceStatus({ status: st, view: t });
   });
 });
 
@@ -3436,6 +3555,7 @@ function showMatchInfo(matchId){
   // Title and basic meta
   matchInfoTitle.innerText = `${sportLabel} — ${ageLabel}`;
   matchInfoMeta.innerText = `${m.teamA} vs ${m.teamB} • ${m.status || ''}`;
+  updatePresenceStatus({ status:'Viewing match', view:'Match info', matchId, matchTeams: `${m.teamA||''} vs ${m.teamB||''}` });
 
   const lines = [];
   lines.push(`<div><strong>Score:</strong> ${scoreA} - ${scoreB}</div>`);
@@ -3588,6 +3708,9 @@ function renderScoringList(data){
     const m = data[id];
     scoringList.appendChild(makeMatchCard(m,id,'scoring'));
   });
+
+  // Update presence to reflect that the admin is browsing scoring
+  updatePresenceStatus({ status:'Browsing scoring', view:'Scoring' });
 
   renderPagination('scScoringPagination', scoringPage, total, (newPage)=>{
     scoringPage = newPage;
@@ -3756,7 +3879,7 @@ async function openScoreSheet(matchId){
 
   // Access control: only the match creator (referee email) or admins can edit
   if(!canEditMatch(m)){
-    alert('You are not allowed to edit this match. Only the supervisor and admins can edit scores.');
+    alert('You are not allowed to edit this match.');
     return;
   }
 
@@ -3777,6 +3900,7 @@ async function openScoreSheet(matchId){
   document.getElementById('statusLabel').innerText = (m.status||'').toUpperCase();
   // Initialize timer display based on the selected duration (can be adjusted from the dropdown)
   resetMatchTimerFromDropdown();
+  updatePresenceStatus({ status:'Scoring match', view:'Scoring', matchId: matchId, matchTeams: `${m.teamA||''} vs ${m.teamB||''}` });
   document.getElementById('eventLog').innerHTML = (m.events || []).map(ev=>`<div>${ev}</div>`).join('');
 
   // Reset quarter to Q1 whenever a match is opened
@@ -4215,6 +4339,7 @@ function applyKnockout(side){
 document.getElementById('closeScore').addEventListener('click', ()=> {
   document.getElementById('scoreSheet').classList.remove('show');
   activeMatchId = null;
+  updatePresenceStatus({ status:'Browsing matches', view:'matches', matchId:null });
 });
 
 function pushEventToMatch(matchId, text){
@@ -4451,6 +4576,8 @@ if(filterWrongBtn) filterWrongBtn.addEventListener('click', ()=> setMatchesFilte
 
 // Initialize default state
 setMatchesFilter('all');
+
+// Gallery tab removed
 document.getElementById('searchMatches').addEventListener('input', ()=> renderMatchesList(lastMatchSnapshot));
 ['filterSportScoring','filterAgeScoring','filterDayScoring','filterTimeScoring','filterSportMatches','filterAgeMatches','filterDayMatches','filterTimeMatches','filterSportLive','filterAgeLive','filterDayLive','filterTimeLive'].forEach(id=>{
   const el = document.getElementById(id);
