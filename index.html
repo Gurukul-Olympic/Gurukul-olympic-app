@@ -63,6 +63,100 @@
     from{transform:rotate(0deg);} to{transform:rotate(360deg);}
   }
 
+  /* Glitch intro overlay */
+  .glitch-intro-overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(15,23,42,0.82);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:5000;
+    overflow:hidden;
+    backdrop-filter:blur(4px);
+  }
+  .glitch-intro-overlay::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:
+      repeating-linear-gradient(
+        to bottom,
+        rgba(15,23,42,0.4) 0px,
+        rgba(15,23,42,0.4) 1px,
+        transparent 1px,
+        transparent 3px
+      );
+    mix-blend-mode:soft-light;
+    pointer-events:none;
+  }
+  .glitch-intro-inner{
+    position:relative;
+    text-align:center;
+    color:var(--text);
+    padding:18px 22px;
+    border-radius:16px;
+    background:rgba(255,255,255,0.96);
+    box-shadow:0 16px 36px rgba(15,23,42,0.28);
+    border:1px solid rgba(200,16,46,0.18);
+  }
+  .glitch-logo-wrapper{
+    margin-bottom:18px;
+  }
+  .glitch-logo-wrapper img{
+    max-width:180px;
+    width:48vw;
+    filter:none;
+  }
+  .glitch-text{
+    font-size:26px;
+    letter-spacing:0.18em;
+    text-transform:uppercase;
+    font-weight:900;
+    position:relative;
+    display:inline-block;
+    color:var(--accent);
+  }
+  .glitch-text span{
+    display:none; /* keep structure but hide extra glitch layers for a minimal look */
+  }
+  .glitch-subtitle{
+    margin-top:8px;
+    font-size:13px;
+    color:var(--muted);
+    letter-spacing:0.16em;
+    text-transform:uppercase;
+  }
+  .glitch-scanline{
+    position:absolute;
+    left:10%;
+    right:10%;
+    height:20px;
+    background:linear-gradient(90deg,transparent,rgba(148,163,184,0.45),transparent);
+    opacity:0.55;
+    animation:glitch-scan 2.3s infinite linear;
+  }
+  @keyframes glitch-skew{
+    0%{ transform:skewX(0deg); }
+    20%{ transform:skewX(3deg); }
+    40%{ transform:skewX(-3deg); }
+    60%{ transform:skewX(1deg); }
+    80%{ transform:skewX(-1deg); }
+    100%{ transform:skewX(0deg); }
+  }
+  @keyframes glitch-shift-1{
+    0%,100%{ clip-path:inset(0 0 60% 0); }
+    50%{ clip-path:inset(40% 0 0 0); }
+  }
+  @keyframes glitch-shift-2{
+    0%,100%{ clip-path:inset(40% 0 0 0); }
+    50%{ clip-path:inset(0 0 60% 0); }
+  }
+  @keyframes glitch-scan{
+    0%{ top:-15%; }
+    100%{ top:120%; }
+  }
+
   /* Layout */
   .sidebar{
     width:260px;
@@ -527,6 +621,104 @@
     text-decoration:underline;
   }
 
+  /* About tab layout & animation */
+  .about-card{
+    display:flex;
+    flex-direction:row;
+    gap:24px;
+    align-items:stretch;
+    animation:aboutFadeIn 420ms ease-out;
+  }
+  .about-left{
+    flex:1.4;
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+  .about-right{
+    flex:1;
+    display:flex;
+    align-items:stretch;
+    justify-content:flex-end;
+  }
+  .about-title{
+    font-size:22px;
+    font-weight:900;
+    line-height:1.2;
+  }
+  .about-body{
+    font-size:14px;
+    line-height:1.6;
+    color:var(--muted);
+    max-width:520px;
+  }
+  .about-grid{
+    margin-top:8px;
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:10px;
+  }
+  .about-highlight{
+    padding:10px 12px;
+    border-radius:14px;
+    background:linear-gradient(135deg,#ffffff,#fef2f2);
+    border:1px solid rgba(229,231,235,1);
+    box-shadow:0 8px 20px rgba(15,23,42,0.06);
+  }
+  .about-highlight-label{
+    font-size:12px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:0.12em;
+    color:var(--accent);
+    margin-bottom:4px;
+  }
+  .about-highlight-text{
+    font-size:13px;
+    color:var(--muted);
+    line-height:1.5;
+  }
+  .about-contact{
+    width:100%;
+    max-width:260px;
+    padding:12px 14px;
+    border-radius:14px;
+    border:1px solid rgba(229,231,235,1);
+    background:var(--card-alt);
+    box-shadow:0 8px 24px rgba(15,23,42,0.05);
+    text-align:center;
+    margin:0 auto;
+  }
+  .about-contact-label{
+    font-size:12px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:0.12em;
+    color:var(--accent);
+    margin-bottom:4px;
+  }
+  .about-contact-text{
+    font-size:13px;
+    line-height:1.6;
+    color:var(--muted);
+    margin-top:6px;
+  }
+  .about-contact-text a{
+    font-size:14px;
+    font-weight:600;
+    color:var(--accent);
+  }
+  @keyframes aboutFadeIn{
+    0%{opacity:0;transform:translateY(16px);filter:blur(6px);}
+    100%{opacity:1;transform:translateY(0);filter:blur(0);}
+  }
+
+  @media (max-width:900px){
+    .about-card{
+      flex-direction:column;
+    }
+  }
+
   /* Footer appearing animation (2s) when Home tab is shown */
   #homeFooter.home-footer-animate .home-footer-line,
   #homeFooter.home-footer-animate .home-footer-link{
@@ -866,6 +1058,7 @@
   .live{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#fff;}
   .done{background:linear-gradient(90deg,#16a34a,#4ade80);color:#ecfdf5;}
   .scheduled{background:#e5e7eb;color:var(--muted);border:1px solid rgba(209,213,219,1);}
+  .wrong{background:#f97316;color:#fff;border:1px solid #ea580c;}
   .winner{color:#2ecc71;font-weight:800}
   .loser{color:#e74c3c;font-weight:800}
   .tie{color:#f1c40f;font-weight:900}
@@ -1082,6 +1275,22 @@
 </head>
 <body>
 
+<!-- Glitch intro shown after login -->
+<div id="glitchIntro" class="glitch-intro-overlay">
+  <div class="glitch-intro-inner">
+    <div class="glitch-logo-wrapper">
+      <img src="final.png" alt="GO 2025" />
+    </div>
+    <div class="glitch-text" aria-label="Welcome to Gurukul Olympics">
+      Welcome to Gurukul Olympics
+      <span>Welcome to Gurukul Olympics</span>
+      <span>Welcome to Gurukul Olympics</span>
+    </div>
+    <div class="glitch-subtitle">#GO2025 • Official Scoring</div>
+    <div class="glitch-scanline"></div>
+  </div>
+</div>
+
 <div class="sidebar">
   <div class="brand">
     <div class="logo">
@@ -1157,11 +1366,11 @@
 
         <div class="home-stats">
           <div class="stat-card floating">
-            <div class="stat-value gradient-text">134</div>
+            <div class="stat-value gradient-text">153</div>
             <div class="stat-label">Registered schools</div>
           </div>
           <div class="stat-card floating" style="animation-delay:0.4s">
-            <div class="stat-value gradient-text">13,000+</div>
+            <div class="stat-value gradient-text">14,000+</div>
             <div class="stat-label">Participants</div>
           </div>
         </div>
@@ -1211,13 +1420,20 @@
         <div class="muted">Matches are persisted to Realtime DB and broadcast live.</div>
       </div>
 
-      <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
+      <div style="margin-top:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
         <label style="font-size:13px;color:var(--muted)">Sport</label>
         <select id="filterSportScoring" style="padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.06)"><option value="all">All</option></select>
         <label style="font-size:13px;color:var(--muted)">Age</label>
         <select id="filterAgeScoring" style="padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.06)"><option value="all">All</option></select>
-        <div style="flex:1"></div>
-        <input id="searchScoring" placeholder="Search team, sport..." style="padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.06)"/>
+        <label style="font-size:13px;color:var(--muted)">Date</label>
+        <select id="filterDayScoring" style="padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.06)"><option value="all">All dates</option></select>
+        <label style="font-size:13px;color:var(--muted)">Time</label>
+        <select id="filterTimeScoring" style="padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.06)">
+          <option value="latest">Latest → Oldest</option>
+          <option value="oldest">Oldest → Latest</option>
+        </select>
+        <div style="flex:1;min-width:80px"></div>
+        <input id="searchScoring" placeholder="Search team, sport..." style="padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.06);min-width:180px"/>
       </div>
 
       <div id="scSchedule" style="margin-top:14px"></div>
@@ -1228,19 +1444,30 @@
   <section id="matches" class="tab tab-hidden">
     <div class="card">
       <h2>Matches</h2>
-      <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+      <!-- Row 1: type filters (All / Live / Finished / Wrong) -->
+      <div style="display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap">
         <button id="filterAll" class="btn ghost">All</button>
         <button id="filterLive" class="btn">Live</button>
         <button id="filterFinished" class="btn">Finished</button>
+        <button id="filterWrong" class="btn">Wrong</button>
+      </div>
 
-        <div style="width:12px"></div>
+      <!-- Row 2: sport / age / date / time / search -->
+      <div style="display:flex;gap:8px;align-items:center;margin-top:6px;flex-wrap:wrap">
         <label style="font-size:13px;color:var(--muted)">Sport</label>
         <select id="filterSportMatches" style="padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.06)"><option value="all">All</option></select>
         <label style="font-size:13px;color:var(--muted)">Age</label>
         <select id="filterAgeMatches" style="padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.06)"><option value="all">All</option></select>
+        <label style="font-size:13px;color:var(--muted)">Date</label>
+        <select id="filterDayMatches" style="padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.06)"><option value="all">All dates</option></select>
+        <label style="font-size:13px;color:var(--muted)">Time</label>
+        <select id="filterTimeMatches" style="padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.06)">
+          <option value="latest">Latest → Oldest</option>
+          <option value="oldest">Oldest → Latest</option>
+        </select>
 
-        <div style="flex:1"></div>
-        <input id="searchMatches" placeholder="Search team, sport..." style="padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.06)"/>
+        <div style="flex:1;min-width:80px"></div>
+        <input id="searchMatches" placeholder="Search team, sport..." style="padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.06);min-width:180px"/>
       </div>
       <div id="matchesList" style="margin-top:12px"></div>
       <div id="matchesPagination" class="pagination" style="margin-top:16px;display:none"></div>
@@ -1250,11 +1477,18 @@
   <section id="live" class="tab tab-hidden">
     <div class="card">
       <h2>Live Matches</h2>
-      <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+      <div style="display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap">
         <label style="font-size:13px;color:var(--muted)">Sport</label>
         <select id="filterSportLive" style="padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.06)"><option value="all">All</option></select>
         <label style="font-size:13px;color:var(--muted)">Age</label>
         <select id="filterAgeLive" style="padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.06)"><option value="all">All</option></select>
+        <label style="font-size:13px;color:var(--muted)">Date</label>
+        <select id="filterDayLive" style="padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.06)"><option value="all">All dates</option></select>
+        <label style="font-size:13px;color:var(--muted)">Time</label>
+        <select id="filterTimeLive" style="padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.06)">
+          <option value="latest">Latest → Oldest</option>
+          <option value="oldest">Oldest → Latest</option>
+        </select>
       </div>
       <div id="liveList" style="margin-top:12px"></div>
       <div id="livePagination" class="pagination" style="margin-top:16px;display:none"></div>
@@ -1308,13 +1542,42 @@
   </section>
 
   <section id="about" class="tab tab-hidden">
-    <div class="card">
-      <h2>About &amp; Help</h2>
-      <p class="muted">Official scoring app for Gurukul Olympics 2025 (#GO2025#).</p>
-      <p style="margin-top:8px;font-size:14px">
-        If you face any problems or have questions, please contact:
-        <a href="mailto:researchinnovation003@gmail.com">researchinnovation003@gmail.com</a>
-      </p>
+    <div class="card about-card">
+      <div class="about-left">
+        <div class="pill-tag" style="margin-bottom:8px">
+          <span class="pill-dot"></span>
+          About #GO2025 — Official Scoring
+        </div>
+        <h2 class="about-title">Scoring built for Gurukul Olympics.</h2>
+        <p class="about-body">
+          This web app is designed to keep every match at Gurukul Olympics 2025 in sync — from
+          the field, to the scorer&apos;s table, to the live board. It is optimized for fast entry,
+          clear results, and safe access for teachers and admins.
+        </p>
+        <div class="about-grid">
+          <div class="about-highlight">
+            <div class="about-highlight-label">Live scoring</div>
+            <div class="about-highlight-text">Updates go straight to Realtime DB so spectators and teams see scores instantly.</div>
+          </div>
+          <div class="about-highlight">
+            <div class="about-highlight-label">Safe access</div>
+            <div class="about-highlight-text">Teachers and admins sign in with approved emails; wrong or test matches can be marked separately.</div>
+          </div>
+        </div>
+      </div>
+      <div class="about-right">
+        <div class="about-contact">
+          <div class="about-contact-label">Need help?</div>
+          <p class="about-contact-text">
+            If you face any problems or have questions, please contact:<br/>
+            <a href="mailto:researchinnovation003@gmail.com">researchinnovation003@gmail.com</a>
+          </p>
+          <p class="about-contact-text">
+            For information about Gurukul and the event, visit:<br/>
+            <a href="https://gurukul.org" target="_blank" rel="noopener noreferrer">gurukul.org</a>
+          </p>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -1407,11 +1670,21 @@
 
   <div style="height:12px"></div>
 
-  <div style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap">
+    <div style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap">
     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
       <button id="saveProgress" class="btn">Save</button>
       <button id="finishMatch" class="btn danger">Finish Match</button>
       <button id="resetMatch" class="btn ghost">Reset</button>
+      <!-- Walkouts & byes scenarios -->
+      <label for="walkOutcomeSelect" style="font-size:12px;color:var(--muted);margin-left:4px;">Walkouts &amp; byes</label>
+      <select id="walkOutcomeSelect" style="padding:6px 8px;border-radius:8px;border:1px solid rgba(209,213,219,1);font-size:12px;min-width:180px;">
+        <option value="">Select outcome…</option>
+        <option value="A_no_show">Team A didn&apos;t show up (Team B wins)</option>
+        <option value="B_no_show">Team B didn&apos;t show up (Team A wins)</option>
+        <option value="both_walkout">Both teams walkout (tied)</option>
+        <option value="bye_A">Bye for Team A (Team A wins)</option>
+        <option value="bye_B">Bye for Team B (Team B wins)</option>
+      </select>
     </div>
     <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;font-size:13px;min-width:220px">
       <div class="score-status-time">
@@ -1546,6 +1819,18 @@
   </div>
 </div>
 
+<!-- Generic confirm overlay -->
+<div class="overlay" id="confirmOverlay" style="display:none">
+  <div class="pwbox card" style="text-align:left;max-width:420px">
+    <h2 style="margin-bottom:8px;color:var(--accent)">Please confirm</h2>
+    <div id="confirmMessage" style="font-size:14px;line-height:1.5;margin-bottom:12px"></div>
+    <div style="display:flex;justify-content:flex-end;gap:8px">
+      <button id="confirmCancel" class="btn ghost">Cancel</button>
+      <button id="confirmOk" class="btn primary">OK</button>
+    </div>
+  </div>
+</div>
+
 <script>
 /* =========================
    Firebase config - KEEP your own project's values here
@@ -1583,6 +1868,16 @@ let localSessionRole = null; // used when bypass code grants session role
 const btnShowAuth = document.getElementById('btnShowAuth');
 const authOverlay = document.getElementById('authOverlay');
 const authClose = document.getElementById('authClose');
+
+// Glitch intro overlay
+const glitchIntro = document.getElementById('glitchIntro');
+
+// Generic confirm overlay elements
+const confirmOverlay = document.getElementById('confirmOverlay');
+const confirmMessageEl = document.getElementById('confirmMessage');
+const confirmOkBtn = document.getElementById('confirmOk');
+const confirmCancelBtn = document.getElementById('confirmCancel');
+let confirmResolveFn = null;
 
 // Match info overlay elements
 const matchInfoOverlay = document.getElementById('matchInfoOverlay');
@@ -1710,6 +2005,80 @@ let whitelistSortBy = 'name';
    ========================= */
 function encodeEmailKey(email){ return encodeURIComponent((email||'').toLowerCase()); }
 function escapeHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// Custom confirm overlay returning a Promise<boolean>
+function showConfirm(message){
+  return new Promise(resolve=>{
+    if(!confirmOverlay || !confirmMessageEl || !confirmOkBtn || !confirmCancelBtn){
+      // Fallback to native confirm if overlay elements missing
+      resolve(window.confirm(message));
+      return;
+    }
+    // If another confirm is open, resolve it as false first
+    if(confirmResolveFn){
+      confirmResolveFn(false);
+      confirmResolveFn = null;
+    }
+    confirmResolveFn = (val)=>{
+      confirmOverlay.style.display = 'none';
+      confirmResolveFn = null;
+      resolve(val);
+    };
+    confirmMessageEl.textContent = message;
+    confirmOverlay.style.display = 'flex';
+  });
+}
+
+if(confirmOkBtn && confirmCancelBtn && confirmOverlay){
+  confirmOkBtn.addEventListener('click', ()=>{ if(confirmResolveFn) confirmResolveFn(true); });
+  confirmCancelBtn.addEventListener('click', ()=>{ if(confirmResolveFn) confirmResolveFn(false); });
+  // Close on backdrop click
+  confirmOverlay.addEventListener('click', (e)=>{
+    if(e.target === confirmOverlay && confirmResolveFn) confirmResolveFn(false);
+  });
+  // Close on Escape key
+  document.addEventListener('keydown', (e)=>{
+    if(e.key === 'Escape' && confirmResolveFn){ confirmResolveFn(false); }
+  });
+}
+
+// Get an IST (Asia/Kolkata) date key like 2025-11-18 for filtering by date
+function getISTDateKeyFromMs(ms){
+  try{
+    const d = new Date(ms || Date.now());
+    const fmt = new Intl.DateTimeFormat('en-CA',{
+      timeZone:'Asia/Kolkata',
+      year:'numeric',month:'2-digit',day:'2-digit'
+    });
+    return fmt.format(d); // YYYY-MM-DD
+  }catch(e){
+    return '';
+  }
+}
+
+// Pretty IST date label (e.g. 18 Nov 2025)
+function getISTDateLabel(ms){
+  try{
+    const d = new Date(ms || Date.now());
+    const fmt = new Intl.DateTimeFormat('en-IN',{
+      timeZone:'Asia/Kolkata',
+      day:'2-digit',month:'short',year:'numeric'
+    });
+    return fmt.format(d);
+  }catch(e){ return ''; }
+}
+
+// Pretty IST time label (e.g. 09:15 PM)
+function getISTTimeLabel(ms){
+  try{
+    const d = new Date(ms || Date.now());
+    const fmt = new Intl.DateTimeFormat('en-IN',{
+      timeZone:'Asia/Kolkata',
+      hour:'2-digit',minute:'2-digit',hour12:true
+    });
+    return fmt.format(d);
+  }catch(e){ return ''; }
+}
 
 // Walkthrough helpers (per email)
 function walkthroughKeyFor(email){
@@ -2233,7 +2602,10 @@ codeAccessBtn.addEventListener('click', async ()=>{
   applyRoleToUI('admin');
   showUserBadge();
   await loadUsersTab();
-  maybeShowWalkthrough(email);
+  // Admin bypass: also show glitch intro, then tour
+  playGlitchIntro(()=>{
+    maybeShowWalkthrough(email);
+  });
 });
 
 // Handle passwordless email sign-in completion (if page loaded from email link)
@@ -2307,6 +2679,27 @@ btnSignOut.addEventListener('click', async ()=>{
   if(authOverlay) authOverlay.style.display = 'flex';
 });
 
+function playGlitchIntro(afterIntro){
+  if(!glitchIntro) {
+    if(typeof afterIntro === 'function') afterIntro();
+    return;
+  }
+  glitchIntro.style.opacity = '1';
+  glitchIntro.style.display = 'flex';
+  glitchIntro.offsetHeight; // force reflow for transition
+  // Keep intro fully visible for ~3 seconds, then fade out
+  setTimeout(()=>{
+    glitchIntro.style.transition = 'opacity 0.9s ease';
+    glitchIntro.style.opacity = '0';
+    setTimeout(()=>{
+      glitchIntro.style.display = 'none';
+      glitchIntro.style.opacity = '';
+      glitchIntro.style.transition = '';
+      if(typeof afterIntro === 'function') afterIntro();
+    }, 900);
+  }, 3000);
+}
+
 /* Show signed-in UI (used after successful sign-in) */
 async function showSignedInUIForEmail(email){
   if(!email) return;
@@ -2328,7 +2721,10 @@ async function showSignedInUIForEmail(email){
     applyRoleToUI(role);
     if(role === 'admin') await loadUsersTab();
     authOverlay.style.display = 'none';
-    maybeShowWalkthrough(email);
+    // After login: full glitch intro, then start tour
+    playGlitchIntro(()=>{
+      maybeShowWalkthrough(email);
+    });
   }catch(e){ console.error(e); alert('Sign-in succeeded but something failed. See console.'); }
 }
 
@@ -2425,6 +2821,7 @@ function applyRoleToUI(role){
     signedInArea.style.display = 'block';
     signedOutArea.style.display = 'none';
     restrictUIForRole(role || 'queued');
+    // Do not auto-play intro on reload; only after a fresh login
   } else {
     signedInArea.style.display = 'none';
     signedOutArea.style.display = 'block';
@@ -2752,6 +3149,17 @@ function makeMatchCard(matchObj, matchId, section){
         <span class=\"loser\">Loser: ${loserTeam}</span>
       </div>`;
     }
+    // Walkout / Bye result (all sports)
+    if(m.walkWin){
+      const winnerTeam = m.walkWin === 'A' ? m.teamA : m.teamB;
+      const loserTeam  = m.walkWin === 'A' ? m.teamB : m.teamA;
+      const method = m.walkType === 'bye' ? 'by Bye' : 'by Walkout';
+      extraLine = `<div style=\"font-size:13px;margin-top:4px\">
+        <span class=\"winner\">Winner: ${winnerTeam} (${method})</span>
+        &nbsp;&nbsp;
+        <span class=\"loser\">Loser: ${loserTeam}</span>
+      </div>`;
+    }
     // Volleyball: use sets summary if available
     else if(m.sport === 'volleyball' && Array.isArray(m.volleyballSets) && m.volleyballSets.length > 0){
       let setsAWon = 0, setsBWon = 0;
@@ -2814,15 +3222,33 @@ function makeMatchCard(matchObj, matchId, section){
     ? `<div class=\"muted\" style=\"font-size:12px\">Supervised by: ${escapeHtml(m.referee)}</div>`
     : '';
 
+  const startedMs = m.startedAt || m.createdAt;
+  const dateKey = m.createdDateIST || getISTDateKeyFromMs(startedMs);
+  const timeLabel = getISTTimeLabel(startedMs);
+  const whenLine = startedMs
+    ? `<div class=\"muted\" style=\"font-size:12px\">${dateKey} • ${timeLabel} IST</div>`
+    : '';
+
   left.innerHTML = `<div style=\"font-weight:900\">${SPORT_LABEL[m.sport] || m.sport} — ${AGE_LABEL[m.age] || m.age}</div>
                     <div class=\"muted\" style=\"font-size:13px\">${teamsLine}</div>
+                    ${whenLine}
                     ${supervisorLine}
                     ${extraLine}`;
   const right = document.createElement('div');
   const badge = document.createElement('div'); badge.className='badge';
-  if(m.status==='live'){ badge.classList.add('live'); badge.innerText='LIVE'; }
-  else if(m.status==='finished'){ badge.classList.add('done'); badge.innerText='FINISHED'; }
-  else { badge.classList.add('scheduled'); badge.innerText=(m.round||''); }
+  if(m.status==='live'){
+    badge.classList.add('live');
+    badge.innerText='LIVE';
+  } else if(m.status==='finished'){
+    badge.classList.add('done');
+    badge.innerText='FINISHED';
+  } else if(m.status==='wrong'){
+    badge.classList.add('wrong');
+    badge.innerText='WRONG';
+  } else {
+    badge.classList.add('scheduled');
+    badge.innerText=(m.round||'');
+  }
   right.appendChild(badge);
 
   // Read current role once for button logic
@@ -2847,6 +3273,11 @@ function makeMatchCard(matchObj, matchId, section){
     const btnRename = document.createElement('button'); btnRename.className='btn'; btnRename.style.marginLeft='8px'; btnRename.innerText='Edit teams';
     btnRename.addEventListener('click', ()=> renameTeams(matchId));
     right.appendChild(btnRename);
+
+    // Teachers and admins: mark match as wrong (created by mistake)
+    const btnWrong = document.createElement('button'); btnWrong.className='btn'; btnWrong.style.marginLeft='8px'; btnWrong.innerText='Mark wrong';
+    btnWrong.addEventListener('click', ()=> markMatchWrong(matchId));
+    right.appendChild(btnWrong);
 
     // Admin-only: delete match
     if(role === 'admin'){
@@ -2891,7 +3322,7 @@ function canEditMatch(match){
 
 // Rename teams (Team A / Team B) for a match.
 // Allowed for: match creator (teacher) and admin. Shows a warning before changing.
-function renameTeams(matchId){
+async function renameTeams(matchId){
   const m = lastMatchSnapshot[matchId];
   if(!m){ alert('Match not found'); return; }
   if(!canEditMatch(m)){
@@ -2899,7 +3330,7 @@ function renameTeams(matchId){
     return;
   }
 
-  const proceed = confirm('WARNING: Changing team names will update this match everywhere (Scoring, Matches, Live). Continue?');
+  const proceed = await showConfirm('WARNING: Changing team names will update this match everywhere (Scoring, Matches, Live). Continue?');
   if(!proceed) return;
 
   const currentA = m.teamA || 'Team A';
@@ -2927,6 +3358,35 @@ function renameTeams(matchId){
     return match;
   }, function(err){
     if(err){ console.error('renameTeams failed', err); alert('Failed to update team names.'); }
+  });
+}
+
+// Mark a match as "wrong" (created by mistake) so admins can review later
+// Allowed for: match creator (teacher) and admins.
+async function markMatchWrong(matchId){
+  const m = lastMatchSnapshot[matchId];
+  if(!m){ alert('Match not found'); return; }
+  if(!canEditMatch(m)){
+    alert('You are not allowed to change this match.');
+    return;
+  }
+
+  const ok = await showConfirm('Mark this match as a WRONG match? It will move to the "Wrong" section for admin review.');
+  if(!ok) return;
+
+  const ref = rtdb.ref(`matches/${matchId}`);
+  const now = Date.now();
+  ref.transaction(match=>{
+    if(!match) return match;
+    match.status = 'wrong';
+    match.wrongMarkedAt = now;
+    match.wrongMarkedBy = getSessionEmail ? (getSessionEmail() || '') : '';
+    match.events = match.events || [];
+    match.events.unshift(`${(new Date()).toLocaleTimeString()} — Marked as WRONG match`);
+    match.updatedAt = now;
+    return match;
+  }, function(err){
+    if(err){ console.error('markMatchWrong failed', err); alert('Failed to mark match as wrong.'); }
   });
 }
 
@@ -2969,6 +3429,9 @@ function showMatchInfo(matchId){
   const ageLabel = AGE_LABEL[m.age] || m.age;
   const scoreA = m.scoreA || 0;
   const scoreB = m.scoreB || 0;
+  const startedMs = m.startedAt || m.createdAt;
+  const startedDateKey = m.createdDateIST || getISTDateKeyFromMs(startedMs);
+  const startedTimeLabel = getISTTimeLabel(startedMs);
 
   // Title and basic meta
   matchInfoTitle.innerText = `${sportLabel} — ${ageLabel}`;
@@ -2976,6 +3439,9 @@ function showMatchInfo(matchId){
 
   const lines = [];
   lines.push(`<div><strong>Score:</strong> ${scoreA} - ${scoreB}</div>`);
+  if(startedMs){
+    lines.push(`<div><strong>Started:</strong> ${startedDateKey} • ${startedTimeLabel} (IST)</div>`);
+  }
   if(m.referee){
     lines.push(`<div><strong>Referee:</strong> ${escapeHtml(m.referee)}</div>`);
   }
@@ -3019,7 +3485,7 @@ function showMatchInfo(matchId){
 }
 
 function applyFiltersToMatch(matchObj, section){
-  let sportFilter = 'all', ageFilter = 'all';
+  let sportFilter = 'all', ageFilter = 'all', dayFilter = 'all';
   if(section==='scoring'){ sportFilter = (document.getElementById('filterSportScoring')||{value:'all'}).value; ageFilter = (document.getElementById('filterAgeScoring')||{value:'all'}).value; }
   if(section==='matches'){ sportFilter = (document.getElementById('filterSportMatches')||{value:'all'}).value; ageFilter = (document.getElementById('filterAgeMatches')||{value:'all'}).value; }
   if(section==='live'){ sportFilter = (document.getElementById('filterSportLive')||{value:'all'}).value; ageFilter = (document.getElementById('filterAgeLive')||{value:'all'}).value; }
@@ -3043,6 +3509,7 @@ function applyFiltersToMatch(matchObj, section){
     const viewFilter = window.matchesViewFilter || 'all';
     if(viewFilter==='live' && matchObj.status!=='live') return false;
     if(viewFilter==='finished' && matchObj.status!=='finished') return false;
+    if(viewFilter==='wrong' && matchObj.status!=='wrong') return false;
     const q = (document.getElementById('searchMatches')||{value:''}).value.toLowerCase();
     if(q){
       const hay = `${matchObj.teamA} ${matchObj.teamB} ${matchObj.sport} ${matchObj.age}`.toLowerCase();
@@ -3050,6 +3517,16 @@ function applyFiltersToMatch(matchObj, section){
     }
   }
   if(section==='live' && matchObj.status!=='live') return false;
+
+  // Day filter (all sections): compare IST date key
+  if(section==='scoring') dayFilter = (document.getElementById('filterDayScoring')||{value:'all'}).value || 'all';
+  if(section==='matches') dayFilter = (document.getElementById('filterDayMatches')||{value:'all'}).value || 'all';
+  if(section==='live')    dayFilter = (document.getElementById('filterDayLive')||{value:'all'}).value || 'all';
+  if(dayFilter !== 'all'){
+    const dateKey = matchObj.createdDateIST || getISTDateKeyFromMs(matchObj.createdAt || matchObj.startedAt || Date.now());
+    if(dateKey !== dayFilter) return false;
+  }
+
   return true;
 }
 
@@ -3059,14 +3536,39 @@ function renderScoringList(data){
   scoringList.innerHTML = '';
 
   // Build filtered & sorted array first
+  // Populate date filter options (Scoring)
+  const daySelect = document.getElementById('filterDayScoring');
+  if(daySelect){
+    const existing = daySelect.value || 'all';
+    const dateKeys = new Set();
+    Object.values(data||{}).forEach(m=>{
+      const key = m.createdDateIST || getISTDateKeyFromMs(m.createdAt || m.startedAt);
+      if(key) dateKeys.add(key);
+    });
+    const sortedKeys = Array.from(dateKeys).sort();
+    daySelect.innerHTML = '<option value="all">All dates</option>' +
+      sortedKeys.map(k=>`<option value="${k}">${k}</option>`).join('');
+    if(sortedKeys.includes(existing)) daySelect.value = existing;
+  }
+
   const allIds = Object.keys(data||{}).sort((a,b)=>{
     const ma = data[a];
     const mb = data[b];
-    const rank = m => m.status === 'live' ? 0 : (m.status === 'scheduled' || !m.status ? 1 : 2); // live -> scheduled/other -> finished
+    const timeOrder = (document.getElementById('filterTimeScoring')||{value:'latest'}).value || 'latest';
+    const rank = m => {
+      const s = m.status || 'scheduled';
+      if(s === 'live') return 0;
+      if(s === 'scheduled') return 1;
+      if(s === 'finished') return 2;
+      if(s === 'wrong') return 3; // wrong matches always last
+      return 2;
+    };
     const ra = rank(ma||{});
     const rb = rank(mb||{});
     if(ra !== rb) return ra - rb;
-    return (mb.createdAt||0) - (ma.createdAt||0);
+    const ca = ma && ma.createdAt ? ma.createdAt : 0;
+    const cb = mb && mb.createdAt ? mb.createdAt : 0;
+    return timeOrder === 'oldest' ? (ca - cb) : (cb - ca);
   });
   const filteredIds = allIds.filter(id=> applyFiltersToMatch(data[id],'scoring'));
   const total = filteredIds.length;
@@ -3098,14 +3600,39 @@ function renderMatchesList(data){
   if(!matchesList) return;
   matchesList.innerHTML = '';
 
+  // Populate date filter options (Matches)
+  const daySelect = document.getElementById('filterDayMatches');
+  if(daySelect){
+    const existing = daySelect.value || 'all';
+    const dateKeys = new Set();
+    Object.values(data||{}).forEach(m=>{
+      const key = m.createdDateIST || getISTDateKeyFromMs(m.createdAt || m.startedAt);
+      if(key) dateKeys.add(key);
+    });
+    const sortedKeys = Array.from(dateKeys).sort();
+    daySelect.innerHTML = '<option value="all">All dates</option>' +
+      sortedKeys.map(k=>`<option value="${k}">${k}</option>`).join('');
+    if(sortedKeys.includes(existing)) daySelect.value = existing;
+  }
+
   const allIds = Object.keys(data||{}).sort((a,b)=>{
     const ma = data[a];
     const mb = data[b];
-    const rank = m => m.status === 'live' ? 0 : (m.status === 'scheduled' || !m.status ? 1 : 2); // live -> scheduled/other -> finished
+    const timeOrder = (document.getElementById('filterTimeMatches')||{value:'latest'}).value || 'latest';
+    const rank = m => {
+      const s = m.status || 'scheduled';
+      if(s === 'live') return 0;
+      if(s === 'scheduled') return 1;
+      if(s === 'finished') return 2;
+      if(s === 'wrong') return 3; // wrong matches always last
+      return 2;
+    };
     const ra = rank(ma||{});
     const rb = rank(mb||{});
     if(ra !== rb) return ra - rb;
-    return (mb.createdAt||0) - (ma.createdAt||0);
+    const ca = ma && ma.createdAt ? ma.createdAt : 0;
+    const cb = mb && mb.createdAt ? mb.createdAt : 0;
+    return timeOrder === 'oldest' ? (ca - cb) : (cb - ca);
   });
   const filteredIds = allIds.filter(id=> applyFiltersToMatch(data[id],'matches'));
   const total = filteredIds.length;
@@ -3137,7 +3664,27 @@ function renderLiveList(data){
   if(!liveList) return;
   liveList.innerHTML = '';
 
-  const allIds = Object.keys(data||{}).sort((a,b)=> (data[b].createdAt||0)-(data[a].createdAt||0));
+  // Populate date filter options (Live)
+  const daySelect = document.getElementById('filterDayLive');
+  if(daySelect){
+    const existing = daySelect.value || 'all';
+    const dateKeys = new Set();
+    Object.values(data||{}).forEach(m=>{
+      const key = m.createdDateIST || getISTDateKeyFromMs(m.createdAt || m.startedAt);
+      if(key) dateKeys.add(key);
+    });
+    const sortedKeys = Array.from(dateKeys).sort();
+    daySelect.innerHTML = '<option value="all">All dates</option>' +
+      sortedKeys.map(k=>`<option value="${k}">${k}</option>`).join('');
+    if(sortedKeys.includes(existing)) daySelect.value = existing;
+  }
+
+  const timeOrder = (document.getElementById('filterTimeLive')||{value:'latest'}).value || 'latest';
+  const allIds = Object.keys(data||{}).sort((a,b)=>{
+    const ca = data[a] && data[a].createdAt ? data[a].createdAt : 0;
+    const cb = data[b] && data[b].createdAt ? data[b].createdAt : 0;
+    return timeOrder === 'oldest' ? (ca - cb) : (cb - ca);
+  });
   const filteredIds = allIds.filter(id=> applyFiltersToMatch(data[id],'live'));
   const total = filteredIds.length;
 
@@ -3178,6 +3725,8 @@ function renderLiveList(data){
   });
 }
 
+// (By Sport tab removed)
+
 /* Score sheet behavior (RTDB) — included from original file */
 let activeMatchId = null;
 
@@ -3201,7 +3750,7 @@ function createUndoButton(side, parentEl){
   parentEl.appendChild(btn);
 }
 
-function openScoreSheet(matchId){
+async function openScoreSheet(matchId){
   const m = lastMatchSnapshot[matchId];
   if(!m){ alert('Match not found'); return; }
 
@@ -3213,7 +3762,7 @@ function openScoreSheet(matchId){
 
   // If match is finished, confirm before allowing edits
   if(m.status === 'finished'){
-    const ok = confirm('This match is already finished. Do you want to edit the points?');
+    const ok = await showConfirm('This match is already finished. Do you want to edit the points?');
     if(!ok) return;
   }
 
@@ -3344,6 +3893,7 @@ function openScoreSheet(matchId){
       createUndoButton('B', teamBControls);
       break;
   }
+
   // === END MODIFICATION ===
 
   // Initialize winner/loser header (if finished)
@@ -3380,7 +3930,23 @@ function renderWinnerLoserHeader(match){
     return;
   }
 
-  // Taekwondo KO overrides everything
+  // Walkout / Bye overrides everything (all sports)
+  if(match.walkType === 'both_walkout'){
+    el.innerHTML = `<span class=\"muted\">Match tied (both teams walkout)</span>`;
+    return;
+  }
+
+  if(match.walkWin){
+    const winnerTeam = match.walkWin === 'A' ? match.teamA : match.teamB;
+    const loserName  = (match.walkType === 'bye') ? 'BYE' : (match.walkWin === 'A' ? match.teamB : match.teamA);
+    const method = match.walkType === 'bye' ? 'by Bye' : 'by Walkout';
+    el.innerHTML = `<span class=\"winner\">Winner: ${winnerTeam} (${method})</span>
+                    &nbsp;&nbsp;
+                    <span class=\"loser\">Loser: ${loserName}</span>`;
+    return;
+  }
+
+  // Taekwondo KO overrides everything (when no walkover recorded)
   if(match.sport === 'taekwondo' && match.koWinner){
     const winnerTeam = match.koWinner === 'A' ? match.teamA : match.teamB;
     const loserTeam  = match.koWinner === 'A' ? match.teamB : match.teamA;
@@ -3508,6 +4074,7 @@ const timerPauseBtn = document.getElementById('timerPause');
 const timerResetBtn = document.getElementById('timerReset');
 const quarterSelectEl = document.getElementById('quarterSelect');
 const manualMinutesEl = document.getElementById('matchDurationManual');
+const walkOutcomeSelectEl = document.getElementById('walkOutcomeSelect');
 
 if(durationSelectEl){
   durationSelectEl.addEventListener('change', ()=>{
@@ -3532,6 +4099,32 @@ if(quarterSelectEl){
   });
 }
 
+// Walkouts & byes dropdown handler
+if(walkOutcomeSelectEl){
+  walkOutcomeSelectEl.addEventListener('change', async ()=>{
+    const val = walkOutcomeSelectEl.value || '';
+    if(!val) return;
+
+    let message = '';
+    if(val === 'A_no_show') message = 'Confirm: Team A did not show up, Team B wins by walkout?';
+    if(val === 'B_no_show') message = 'Confirm: Team B did not show up, Team A wins by walkout?';
+    if(val === 'both_walkout') message = 'Confirm: both teams walked out, match tied?';
+    if(val === 'bye_A') message = 'Confirm: Bye for Team A (wins), Team B marked as BYE?';
+    if(val === 'bye_B') message = 'Confirm: Bye for Team B (wins), Team A marked as BYE?';
+
+    const ok = await showConfirm(message || 'Apply this outcome?');
+    if(!ok){ walkOutcomeSelectEl.value = ''; return; }
+
+    if(val === 'A_no_show') applyWalkover('B','walkout');
+    else if(val === 'B_no_show') applyWalkover('A','walkout');
+    else if(val === 'both_walkout') applyWalkover('A','both_walkout');
+    else if(val === 'bye_A') applyWalkover('A','bye');
+    else if(val === 'bye_B') applyWalkover('B','bye');
+
+    walkOutcomeSelectEl.value = '';
+  });
+}
+
 // Collapsible event log in score sheet
 const eventLogWrapperEl = document.getElementById('eventLogWrapper');
 const toggleEventLogBtn = document.getElementById('toggleEventLog');
@@ -3542,6 +4135,52 @@ if(eventLogWrapperEl && toggleEventLogBtn){
     toggleEventLogBtn.textContent = isHidden ? 'Hide events' : 'Show events';
   });
 }
+
+// Generic walkover / bye handler (all sports)
+// side: 'A' or 'B'; type: 'walkout' | 'bye' | 'both_walkout'
+function applyWalkover(side, type){
+  if(!activeMatchId) return;
+  const ref = rtdb.ref(`matches/${activeMatchId}`);
+  ref.transaction(match=>{
+    if(!match) return match;
+    // We allow changing the outcome later, so always overwrite existing walkout/bye state
+    const now = Date.now();
+
+    // Both teams walkout (tie)
+    if(type === 'both_walkout'){
+      match.walkWin = null;
+      match.walkType = 'both_walkout';
+      match.status = 'finished';
+      match.finishedAt = now;
+      match.updatedAt = now;
+      match.events = match.events || [];
+      match.events.unshift(`${(new Date()).toLocaleTimeString()} — Both teams walkout (tied)`);
+      return match;
+    }
+
+    match.walkWin = side;           // 'A' or 'B'
+    match.walkType = type || 'walkout'; // 'walkout' | 'bye'
+    match.status = 'finished';
+    match.finishedAt = now;
+    match.updatedAt = now;
+
+    const winnerTeam = side === 'A' ? (match.teamA || 'Team A') : (match.teamB || 'Team B');
+    const loserTeam  = side === 'A' ? (match.teamB || 'Team B') : (match.teamA || 'Team A');
+    const teamLabel  = side === 'A' ? 'Team A' : 'Team B';
+    const methodLabel = type === 'bye' ? 'Bye win' : 'Walkout win';
+
+    match.events = match.events || [];
+    match.events.unshift(`${(new Date()).toLocaleTimeString()} — ${teamLabel} ${methodLabel}: ${winnerTeam} vs ${loserTeam}`);
+    return match;
+  }, function(err, committed, snapshot){
+    if(err){ console.error('applyWalkover failed', err); return; }
+    if(committed && snapshot.val() && activeMatchId === snapshot.key){
+      updateScoreSheetLive(snapshot.val());
+    }
+  });
+}
+
+// (per-team walkout buttons removed; using dropdown instead)
 
 // Taekwondo KO handler
 function applyKnockout(side){
@@ -3667,6 +4306,17 @@ function undoLast(side){
     if(idx===-1) return match;
     const ev = match.events.splice(idx,1)[0];
 
+    // Special case: undo walkout / bye
+    if(ev.includes('Walkout win') || ev.includes('Bye win') || ev.includes('Both teams walkout')){
+      match.walkWin = null;
+      match.walkType = null;
+      match.status = 'live';
+      match.finishedAt = null;
+      match.events.unshift(`${(new Date()).toLocaleTimeString()} — UNDO WALKOVER ${side}`);
+      match.updatedAt = Date.now();
+      return match;
+    }
+
     // Special case: undo taekwondo KO
     if(match.sport === 'taekwondo' && ev.includes('Knockout')){
       // Clear KO winner and revert to live (scores unchanged)
@@ -3699,7 +4349,8 @@ function undoLast(side){
 
 document.getElementById('finishMatch').addEventListener('click', async ()=>{
   if(!activeMatchId) return;
-  if(!confirm('Mark match as finished?')) return;
+  const ok = await showConfirm('Mark match as finished?');
+  if(!ok) return;
 
   const ref = rtdb.ref(`matches/${activeMatchId}`);
   const now = Date.now();
@@ -3739,7 +4390,8 @@ document.getElementById('finishMatch').addEventListener('click', async ()=>{
 
 document.getElementById('resetMatch').addEventListener('click', async ()=>{
   if(!activeMatchId) return;
-  if(!confirm('Reset scores to 0 and clear events?')) return;
+  const ok = await showConfirm('Reset scores to 0 and clear events?');
+  if(!ok) return;
 
   const ref = rtdb.ref(`matches/${activeMatchId}`);
   await ref.transaction(match=>{
@@ -3747,19 +4399,28 @@ document.getElementById('resetMatch').addEventListener('click', async ()=>{
     match.scoreA = 0;
     match.scoreB = 0;
     match.events = [];
-    // If it was a taekwondo KO, clear KO state and make match live again
+    // Clear any taekwondo KO outcome
     if(match.sport === 'taekwondo'){
       match.koWinner = null;
-      match.status = 'live';
-      match.finishedAt = null;
     }
+    // Clear any walkout / bye / both-walkout outcome
+    match.walkWin = null;
+    match.walkType = null;
+    match.status = 'live';
+    match.finishedAt = null;
     match.updatedAt = Date.now();
     return match;
   });
 
+  // Update local UI to reflect reset state
   document.getElementById('teamAScore').innerText='0';
   document.getElementById('teamBScore').innerText='0';
   document.getElementById('eventLog').innerHTML='';
+  const statusEl = document.getElementById('statusLabel');
+  if(statusEl) statusEl.innerText = 'LIVE';
+  const winnerHeaderEl = document.getElementById('winnerLoserHeader');
+  if(winnerHeaderEl) winnerHeaderEl.innerHTML = '';
+
   pushEventToMatch(activeMatchId, 'Match reset');
 });
 
@@ -3768,27 +4429,30 @@ window.matchesViewFilter = 'all';
 const filterAllBtn = document.getElementById('filterAll');
 const filterLiveBtn = document.getElementById('filterLive');
 const filterFinishedBtn = document.getElementById('filterFinished');
+const filterWrongBtn = document.getElementById('filterWrong');
 
 function setMatchesFilter(mode){
   window.matchesViewFilter = mode;
   // Update visual state
-  [filterAllBtn, filterLiveBtn, filterFinishedBtn].forEach(btn=>{
+  [filterAllBtn, filterLiveBtn, filterFinishedBtn, filterWrongBtn].forEach(btn=>{
     if(btn) btn.classList.remove('match-filter-active');
   });
   if(mode === 'all' && filterAllBtn) filterAllBtn.classList.add('match-filter-active');
   if(mode === 'live' && filterLiveBtn) filterLiveBtn.classList.add('match-filter-active');
   if(mode === 'finished' && filterFinishedBtn) filterFinishedBtn.classList.add('match-filter-active');
+  if(mode === 'wrong' && filterWrongBtn) filterWrongBtn.classList.add('match-filter-active');
   renderMatchesList(lastMatchSnapshot);
 }
 
 if(filterAllBtn) filterAllBtn.addEventListener('click', ()=> setMatchesFilter('all'));
 if(filterLiveBtn) filterLiveBtn.addEventListener('click', ()=> setMatchesFilter('live'));
 if(filterFinishedBtn) filterFinishedBtn.addEventListener('click', ()=> setMatchesFilter('finished'));
+if(filterWrongBtn) filterWrongBtn.addEventListener('click', ()=> setMatchesFilter('wrong'));
 
 // Initialize default state
 setMatchesFilter('all');
 document.getElementById('searchMatches').addEventListener('input', ()=> renderMatchesList(lastMatchSnapshot));
-['filterSportScoring','filterAgeScoring','filterSportMatches','filterAgeMatches','filterSportLive','filterAgeLive'].forEach(id=>{
+['filterSportScoring','filterAgeScoring','filterDayScoring','filterTimeScoring','filterSportMatches','filterAgeMatches','filterDayMatches','filterTimeMatches','filterSportLive','filterAgeLive','filterDayLive','filterTimeLive'].forEach(id=>{
   const el = document.getElementById(id);
   if(el) el.addEventListener('change', ()=> { renderScoringList(lastMatchSnapshot); renderMatchesList(lastMatchSnapshot); renderLiveList(lastMatchSnapshot); });
 });
@@ -3806,10 +4470,12 @@ document.getElementById('startCreate').addEventListener('click', async ()=>{
   const matchRef = rtdb.ref('matches').push();
   const matchId = matchRef.key;
   const now = Date.now();
+  const createdDateIST = getISTDateKeyFromMs(now);
   const doc = {
     sport, age, teamA, teamB,
     referee: referee || null,
-    scoreA:0, scoreB:0, status:'live', events:[], createdAt: now, startedAt: now, finishedAt: null, updatedAt: now
+    scoreA:0, scoreB:0, status:'live', events:[], createdAt: now, startedAt: now, finishedAt: null, updatedAt: now,
+    createdDateIST
   };
 
   // Initialize volleyball-specific fields so we can track multiple sets
