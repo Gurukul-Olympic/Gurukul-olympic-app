@@ -3361,7 +3361,8 @@ function restrictUIForRole(role){
   } else if(normalized === 'teacher'){
     allowedTabs = ['home','sports','scoring','matches','live','online','about'];
   } else if(normalized === 'user'){
-    allowedTabs = ['home','live','matches','online','about'];
+    // After sign-in, regular users should also be able to open Scoring
+    allowedTabs = ['home','sports','scoring','live','matches','online','about'];
   } else { // queued or unknown => only home + about
     allowedTabs = ['home','about'];
   }
@@ -3379,7 +3380,7 @@ function restrictUIForRole(role){
   });
 
   // Ensure currently visible tab is allowed; otherwise, fall back to first allowed tab
-  const activeSection = document.querySelector('.tab[style*="display:block"]');
+  const activeSection = document.querySelector('.tab.tab-active');
   const fallbackTab = allowedTabs[0] || 'home';
   if(!activeSection || !allowedTabs.includes(activeSection.id)){
     showTab(fallbackTab);
