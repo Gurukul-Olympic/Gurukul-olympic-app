@@ -1508,24 +1508,6 @@
     background:#fff;
     border:1px solid rgba(209,213,219,1);
   }
-  .chat-msg-out .chat-msg-bubble{
-    background:linear-gradient(120deg,var(--accent),var(--accent-2));
-    color:#fef2f2;
-    border-color:transparent;
-  }
-
-  @media (max-width:900px){
-    .online-layout{
-      flex-direction:column;
-    }
-    .online-users-list{
-      max-width:none;
-      border-right:0;
-      border-bottom:1px solid rgba(229,231,235,1);
-      padding-right:0;
-      padding-bottom:8px;
-    }
-  }
 </style>
 </head>
 <body>
@@ -1564,7 +1546,6 @@
     <button data-tab="scoring">Scoring</button>
     <button data-tab="matches">Matches</button>
     <button data-tab="live">Live</button>
-    <button data-tab="online">Online</button>
     <button data-tab="about">About</button>
     <button data-tab="users">Users</button>
     <div class="grow"></div>
@@ -1754,29 +1735,6 @@
       </div>
       <div id="liveList" style="margin-top:12px"></div>
       <div id="livePagination" class="pagination" style="margin-top:16px;display:none"></div>
-    </div>
-  </section>
-
-  <section id="online" class="tab tab-hidden">
-    <div class="card">
-      <h2>Online &amp; Chat</h2>
-      <p class="muted" style="margin-top:4px;font-size:13px;">
-        See who is online and chat in real time. Regular users only see their own chat; admins can see everyone.
-      </p>
-      <div class="online-layout" style="margin-top:10px;">
-        <div class="online-users-list">
-          <div id="onlineActivitySummary" class="muted" style="font-size:13px;margin-bottom:6px;">No one online.</div>
-          <div id="onlineActivityList" style="max-height:260px;overflow-y:auto;font-size:13px;"></div>
-        </div>
-        <div class="online-chat-panel">
-          <div id="chatHeader" style="font-weight:700;font-size:14px;">Select a user on the left to start chat.</div>
-          <div id="chatMessages" class="chat-messages"></div>
-          <div id="chatInputRow" class="chat-input-row">
-            <input id="chatMessageInput" type="text" placeholder="Type a message and press Enter…" />
-            <button id="chatSendButton" class="btn primary">Send</button>
-          </div>
-        </div>
-      </div>
     </div>
   </section>
 
@@ -2289,17 +2247,8 @@ let whitelistSortBy = 'name';
 const onlinePresenceEl = document.getElementById('onlinePresence');
 const onlineCountEl = document.getElementById('onlineCount');
 const onlineListEl = document.getElementById('onlineList');
-const onlineActivityListEl = document.getElementById('onlineActivityList');
-const onlineActivitySummaryEl = document.getElementById('onlineActivitySummary');
-const chatMessagesEl = document.getElementById('chatMessages');
-const chatInputEl = document.getElementById('chatMessageInput');
-const chatSendBtn = document.getElementById('chatSendButton');
-const chatHeaderEl = document.getElementById('chatHeader');
-const chatInputRowEl = document.getElementById('chatInputRow');
 let presenceRef = null;
 let onlineRef = null;
-let currentChatKey = null;
-let currentChatRef = null;
 
 // Gallery refs removed
 
@@ -2343,222 +2292,28 @@ function updatePresenceStatus(fields){
 }
 
 function initOnlinePresenceListener(){
-  if(onlineRef || !rtdb) return;
+  if(!onlinePresenceEl || onlineRef || !rtdb) return;
   onlineRef = rtdb.ref('presence');
   onlineRef.on('value', snap=>{
-    const raw = snap.val() || {};
-    const entries = Object.entries(raw);
-    const online = entries
-      .map(([key,u])=> Object.assign({_key:key}, u||{}))
-      .filter(u => u && u.status && u.status !== 'offline');
-
-    let viewerRole = '';
-    let viewerEmail = '';
-    try{
-      if(typeof getSessionRole === 'function') viewerRole = (getSessionRole() || '').toLowerCase();
-      if(typeof getSessionEmail === 'function') viewerEmail = (getSessionEmail() || '').toLowerCase();
-    }catch(e){ viewerRole=''; viewerEmail=''; }
-    const isAdminViewer = viewerRole === 'admin';
-    const onlineForTab = isAdminViewer
-      ? online
-      : online.filter(u => (u.email || '').toLowerCase() === viewerEmail);
-
-    if(onlineCountEl) onlineCountEl.textContent = String(online.length);
-
-    // Sidebar mini list (admins only)
-    if(onlineListEl){
-      if(!isAdminViewer || online.length === 0){
-        onlineListEl.innerHTML = online.length === 0
-          ? '<div class="muted">No one online.</div>'
-          : '<div class="muted">Online list visible to admins only.</div>';
-      } else {
-        const rows = online
-          .sort((a,b)=> (b.lastActive||0) - (a.lastActive||0))
-          .map(u => {
-            const name = escapeHtml(u.displayName || u.email || 'User');
-            const status = escapeHtml(u.status || 'online');
-            const view = u.view ? ` — ${escapeHtml(u.view)}` : '';
-            return `<div style="margin-bottom:4px;"><strong>${name}</strong> · <span>${status}</span><span>${view}</span></div>`;
-          })
-          .join('');
-        onlineListEl.innerHTML = rows;
-      }
-    }
-
-    // Full Online tab list
-    if(onlineActivityListEl){
-      if(onlineForTab.length === 0){
-        onlineActivityListEl.innerHTML = '<div class="muted">No one online right now.</div>';
-      } else {
-        const rows = onlineForTab
-          .sort((a,b)=> (b.lastActive||0) - (a.lastActive||0))
-          .map(u=>{
-            const name = u.displayName || u.email || 'User';
-            const email = u.email || '';
-            const role = u.role || '';
-            const status = u.status || 'online';
-            const view = u.view || '';
-            const nameAttr = encodeURIComponent(name);
-            const emailAttr = encodeURIComponent(email);
-            const roleAttr = encodeURIComponent(role);
-            return `<button class=\"online-user-row\" data-key=\"${u._key}\" data-name=\"${nameAttr}\" data-email=\"${emailAttr}\" data-role=\"${roleAttr}\">
-                      <div class=\"online-user-name\">${escapeHtml(name)}</div>
-                      <div class=\"online-user-meta\">${escapeHtml(email)}${role ? ' • ' + escapeHtml(role) : ''}</div>
-                      <div class=\"online-user-meta\">${escapeHtml(status)}${view ? ' — ' + escapeHtml(view) : ''}</div>
-                    </button>`;
-          })
-          .join('');
-        onlineActivityListEl.innerHTML = rows;
-
-        onlineActivityListEl.querySelectorAll('.online-user-row').forEach(btn=>{
-          btn.addEventListener('click', ()=>{
-            const key = btn.getAttribute('data-key');
-            const name = decodeURIComponent(btn.getAttribute('data-name') || '');
-            const email = decodeURIComponent(btn.getAttribute('data-email') || '');
-            selectChatUserForAdmin(key, {displayName:name, email});
-          });
-        });
-      }
-    }
-
-    if(onlineActivitySummaryEl){
-      if(onlineForTab.length === 0){
-        onlineActivitySummaryEl.textContent = 'No one online.';
-      } else if(onlineForTab.length === 1){
-        onlineActivitySummaryEl.textContent = '1 person online.';
-      } else {
-        onlineActivitySummaryEl.textContent = `${onlineForTab.length} people online.`;
-      }
-    }
-  });
-}
-
-function renderChatMessages(msgs){
-  if(!chatMessagesEl) return;
-  if(!Array.isArray(msgs) || msgs.length === 0){
-    chatMessagesEl.innerHTML = '<div class="muted">No messages yet. Start the conversation.</div>';
-    return;
-  }
-  let role = '';
-  try{
-    if(typeof getSessionRole === 'function') role = (getSessionRole() || '').toLowerCase();
-  }catch(e){ role = ''; }
-
-  const rows = msgs.map(m=>{
-    const text = escapeHtml(m.text || '');
-    const senderType = (m.senderType || '').toLowerCase();
-    const displayName = escapeHtml(m.displayName || (senderType === 'admin' ? 'Admin' : 'User'));
-    const ts = m.ts ? new Date(m.ts).toLocaleTimeString() : '';
-    const isOut = role === 'admin' ? (senderType === 'admin') : (senderType === 'user');
-    const sideClass = isOut ? 'chat-msg-out' : 'chat-msg-in';
-    const meta = ts ? `${displayName} • ${ts}` : displayName;
-    return `<div class=\"chat-msg ${sideClass}\">\n              <div class=\"chat-msg-meta\">${meta}</div>\n              <div class=\"chat-msg-bubble\">${text}</div>\n            </div>`;
-  }).join('');
-  chatMessagesEl.innerHTML = rows;
-  chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
-}
-
-function subscribeToChat(chatKey){
-  if(!rtdb || !chatKey) return;
-  if(currentChatRef) currentChatRef.off();
-  currentChatKey = chatKey;
-  currentChatRef = rtdb.ref('adminChat/' + chatKey + '/messages');
-  currentChatRef.limitToLast(100).on('value', snap=>{
-    const raw = snap.val() || {};
-    const msgs = Object.values(raw).sort((a,b)=> (a.ts||0) - (b.ts||0));
-    renderChatMessages(msgs);
-  });
-}
-
-function selectChatUserForAdmin(chatKey, userInfo){
-  if(!chatHeaderEl) return;
-  let role = '';
-  try{
-    if(typeof getSessionRole === 'function') role = (getSessionRole() || '').toLowerCase();
-  }catch(e){ role = ''; }
-  if(role !== 'admin'){
-    // Non-admins should not be able to select arbitrary users
-    return;
-  }
-  const name = (userInfo && (userInfo.displayName || userInfo.email)) || 'User';
-  chatHeaderEl.textContent = 'Chat with ' + name;
-  if(chatInputRowEl) chatInputRowEl.style.display = 'flex';
-  subscribeToChat(chatKey);
-}
-
-function initUserChatIfNeeded(){
-  if(!rtdb) return;
-  const email = (typeof getSessionEmail === 'function') ? (getSessionEmail() || '') : '';
-  if(!email) return;
-  let role = '';
-  try{
-    if(typeof getSessionRole === 'function') role = (getSessionRole() || '').toLowerCase();
-  }catch(e){ role = ''; }
-
-  const key = encodeEmailKey(email);
-
-  if(chatHeaderEl){
-    if(role === 'admin'){
-      chatHeaderEl.textContent = 'Select a user on the left to start chat.';
-      if(chatInputRowEl) chatInputRowEl.style.display = 'none';
-    } else {
-      chatHeaderEl.textContent = 'Chat with admins';
-      if(chatInputRowEl) chatInputRowEl.style.display = 'flex';
-    }
-  }
-
-  if(role !== 'admin'){
-    subscribeToChat(key);
-  }
-}
-
-function sendChatMessage(){
-  if(!chatInputEl || !rtdb) return;
-  const text = (chatInputEl.value || '').trim();
-  if(!text) return;
-
-  let email = (typeof getSessionEmail === 'function') ? (getSessionEmail() || '') : '';
-  let role = '';
-  try{
-    if(typeof getSessionRole === 'function') role = (getSessionRole() || '').toLowerCase();
-  }catch(e){ role = ''; }
-
-  if(!email) email = 'anonymous';
-
-  let chatKey = currentChatKey;
-  if(role !== 'admin'){
-    chatKey = encodeEmailKey(email);
-    if(!currentChatKey || currentChatKey !== chatKey){
-      subscribeToChat(chatKey);
-    }
-  } else {
-    if(!chatKey){
-      alert('Select a user from the left to send a message.');
+    if(!onlineListEl || !onlineCountEl) return;
+    const data = snap.val() || {};
+    const arr = Object.values(data);
+    const online = arr.filter(u => u && u.status && u.status !== 'offline');
+    onlineCountEl.textContent = String(online.length);
+    if(online.length === 0){
+      onlineListEl.innerHTML = '<div class="muted">No one online.</div>';
       return;
     }
-  }
-
-  const ref = rtdb.ref('adminChat/' + chatKey + '/messages').push();
-  const displayName = localStorage.getItem('go_displayName') || (email.split('@')[0] || email);
-  ref.set({
-    text,
-    from: email,
-    senderType: role === 'admin' ? 'admin' : 'user',
-    senderRole: role || 'user',
-    displayName,
-    ts: firebase.database.ServerValue.TIMESTAMP
-  }).then(()=>{
-    chatInputEl.value = '';
-  }).catch(err=> console.error('sendChatMessage failed', err));
-}
-
-if(chatSendBtn && chatInputEl){
-  chatSendBtn.addEventListener('click', sendChatMessage);
-  chatInputEl.addEventListener('keydown', e=>{
-    if(e.key === 'Enter' && !e.shiftKey){
-      e.preventDefault();
-      sendChatMessage();
-    }
+    const rows = online
+      .sort((a,b)=> (b.lastActive||0) - (a.lastActive||0))
+      .map(u => {
+        const name = escapeHtml(u.displayName || u.email || 'User');
+        const status = escapeHtml(u.status || 'online');
+        const view = u.view ? ` — ${escapeHtml(u.view)}` : '';
+        return `<div style="margin-bottom:4px;"><strong>${name}</strong> · <span>${status}</span><span>${view}</span></div>`;
+      })
+      .join('');
+    onlineListEl.innerHTML = rows;
   });
 }
 
@@ -2571,8 +2326,12 @@ function setupOnlinePresence(role){
   if(onlinePresenceEl){
     if(isAdmin){
       onlinePresenceEl.style.display = 'block';
+      initOnlinePresenceListener();
     } else {
       onlinePresenceEl.style.display = 'none';
+    }
+  }
+}
     }
   }
   initOnlinePresenceListener();
@@ -3357,12 +3116,11 @@ function restrictUIForRole(role){
   // Determine allowed tabs for this role
   let allowedTabs = [];
   if(normalized === 'admin'){
-    allowedTabs = ['home','sports','scoring','matches','live','online','users','about'];
+    allowedTabs = ['home','sports','scoring','matches','live','users','about'];
   } else if(normalized === 'teacher'){
-    allowedTabs = ['home','sports','scoring','matches','live','online','about'];
+    allowedTabs = ['home','sports','scoring','matches','live','about'];
   } else if(normalized === 'user'){
-    // After sign-in, regular users should also be able to open Scoring
-    allowedTabs = ['home','sports','scoring','live','matches','online','about'];
+    allowedTabs = ['home','live','matches','about'];
   } else { // queued or unknown => only home + about
     allowedTabs = ['home','about'];
   }
@@ -3394,7 +3152,6 @@ function applyRoleToUI(role){
   showUserBadge();
   restrictUIForRole(role);
   setupOnlinePresence(role);
-  initUserChatIfNeeded();
 }
 
 /* On page load, restore session if any in localStorage */
@@ -3410,7 +3167,6 @@ function applyRoleToUI(role){
     const effRole = role || 'queued';
     restrictUIForRole(effRole);
     setupOnlinePresence(effRole);
-    initUserChatIfNeeded();
     // Do not auto-play intro on reload; only after a fresh login
   } else {
     signedInArea.style.display = 'none';
@@ -3539,7 +3295,6 @@ document.querySelectorAll('nav button[data-tab]').forEach(btn=>{
       scoring: 'Browsing scoring',
       matches: 'Browsing matches',
       live: 'Viewing live matches',
-      online: 'Online / Chat',
       gallery: 'Viewing gallery',
       about: 'Viewing about',
       users: 'Managing users'
