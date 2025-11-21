@@ -1508,6 +1508,27 @@
     background:#fff;
     border:1px solid rgba(209,213,219,1);
   }
+
+  /* Race area input focus states */
+  #raceArea input[data-race-field]:focus,
+  #raceArea select[data-race-field]:focus{
+    outline:none;
+    border-color:var(--accent);
+    box-shadow:0 0 0 3px var(--accent-soft);
+  }
+
+  #raceArea input[data-race-field]:hover,
+  #raceArea select[data-race-field]:hover{
+    border-color:#9ca3af;
+  }
+
+  #raceArea table tr:hover{
+    background:#f3f4f6 !important;
+  }
+
+  #raceArea table tr:hover td{
+    background:transparent;
+  }
 </style>
 </head>
 <body>
@@ -1887,7 +1908,7 @@
 
   <div style="height:12px"></div>
 
-  <div style="display:flex;gap:12px">
+  <div id="teamBlocksContainer" style="display:flex;gap:12px">
     <div class="teamBlock">
       <div id="teamAName" style="font-weight:900"></div>
       <div id="teamASchool" class="muted" style="font-size:13px"></div>
@@ -1973,13 +1994,37 @@
     </div>
   </div>
 
-  <div class="event-log-section" style="margin-top:4px;">
+  <div class="event-log-section" style="margin-top:16px;">
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
       <h4 style="margin:6px 0">Event Log</h4>
       <button id="toggleEventLog" class="btn ghost" style="padding:4px 10px;font-size:12px;">Show events</button>
     </div>
     <div id="eventLogWrapper" style="margin-top:6px;display:none;">
       <div id="eventLog" class="log"></div>
+    </div>
+  </div>
+
+  <!-- Race layout for track & field events (participants table) -->
+  <div id="raceArea" style="display:none;margin-top:24px;padding:20px;background:#f9fafb;border-radius:12px;border:1px solid #e5e7eb;">
+    <h4 style="margin:0 0 20px 0;font-size:16px;font-weight:700;color:var(--accent);">Participants</h4>
+    <div style="display:flex;gap:12px;align-items:center;margin-bottom:20px;font-size:13px;flex-wrap:wrap;padding:12px;background:white;border-radius:8px;border:1px solid #e5e7eb;">
+      <label for="raceParticipantCount" class="muted" style="font-weight:500;margin-right:4px;">Number of participants:</label>
+      <input id="raceParticipantCount" type="number" min="5" max="30" value="5" style="width:90px;padding:8px 10px;border-radius:8px;border:1px solid rgba(209,213,219,1);font-size:13px;" />
+      <span class="muted" style="margin-left:4px;">(min 5, max 30)</span>
+      <button id="raceApplyCount" class="btn" style="margin-left:8px;padding:8px 16px;">Apply</button>
+    </div>
+    <div id="raceTableWrapper" style="overflow-x:auto;background:white;border-radius:8px;border:1px solid #e5e7eb;padding:4px;">
+      <table id="raceTable" style="width:100%;border-collapse:separate;border-spacing:0;font-size:13px;min-width:520px;">
+        <thead>
+          <tr style="background:#f3f4f6;">
+            <th style="text-align:left;padding:12px 14px;border-bottom:2px solid #e5e7eb;font-weight:600;color:#374151;">#</th>
+            <th style="text-align:left;padding:12px 14px;border-bottom:2px solid #e5e7eb;font-weight:600;color:#374151;">School</th>
+            <th style="text-align:left;padding:12px 14px;border-bottom:2px solid #e5e7eb;font-weight:600;color:#374151;">Participant name</th>
+            <th style="text-align:left;padding:12px 14px;border-bottom:2px solid #e5e7eb;font-weight:600;color:#374151;">Rank (1/2/3)</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
     </div>
   </div>
 
@@ -3208,6 +3253,10 @@ auth.onAuthStateChanged(async user=>{
    The original file's scoring behavior and RTDB listeners are preserved below.
 */
 const SPORTS = ['football','basketball','volleyball','kabaddi','tugofwar','100m','200m','400m','4x100m','zigzag','discus','shotput','javelin','highjump','longjump','badminton_singles','badminton_doubles','tabletennis_singles','tabletennis_doubles','carrom_single','carrom_double','chess','taekwondo','skating'];
+const RACE_SPORTS = ['100m','200m','400m','4x100m','skating','javelin','shotput','discus'];
+const RACE_MIN_PARTICIPANTS = 5;
+const RACE_MAX_PARTICIPANTS = 30;
+let currentRaceParticipants = [];
 const SPORT_LABEL = {
   football:'Football',
   basketball:'Basketball',
@@ -3238,6 +3287,11 @@ const AGES = ['u12','u14','u16','u18'];
 const AGE_LABEL = {u12:'U12', u14:'U14', u16:'U16', u18:'U18' };
 
 const tabs = document.querySelectorAll('nav button[data-tab], .bottom-tabs button[data-tab]');
+
+function isRaceSport(sport){
+  return RACE_SPORTS.includes(String(sport||'').toLowerCase());
+}
+
 document.querySelectorAll('nav button[data-tab]').forEach(btn=>{
   btn.addEventListener('click',()=>{
     if(btn.classList.contains('disabled')) return;
@@ -3575,14 +3629,18 @@ function makeMatchCard(matchObj, matchId, section){
     }
   }
 
-  // For Matches tab, show final score beside team names (except taekwondo KO)
-  let teamsLine = `${m.teamA} vs ${m.teamB}`;
-  const hasScore = (m.scoreA != null || m.scoreB != null);
-  const isTKOK = (m.sport === 'taekwondo' && m.koWinner);
-  if(section === 'matches' && hasScore && !isTKOK){
-    const sa = m.scoreA != null ? m.scoreA : 0;
-    const sb = m.scoreB != null ? m.scoreB : 0;
-    teamsLine += ` — ${sa} - ${sb}`;
+  // For Matches tab, show final score beside team names (except taekwondo KO and race sports)
+  let teamsLine = '';
+  const isRace = isRaceSport(m.sport);
+  if(!isRace){
+    teamsLine = `${m.teamA} vs ${m.teamB}`;
+    const hasScore = (m.scoreA != null || m.scoreB != null);
+    const isTKOK = (m.sport === 'taekwondo' && m.koWinner);
+    if(section === 'matches' && hasScore && !isTKOK){
+      const sa = m.scoreA != null ? m.scoreA : 0;
+      const sb = m.scoreB != null ? m.scoreB : 0;
+      teamsLine += ` — ${sa} - ${sb}`;
+    }
   }
 
   const supervisorLine = m.referee
@@ -4175,13 +4233,28 @@ async function openScoreSheet(matchId){
   }
   
   // === MODIFIED: Add dynamic buttons ===
-  const sport = m.sport;
+  const sport = String(m.sport || '').toLowerCase().trim();
   const teamAControls = document.getElementById('teamAControls');
   const teamBControls = document.getElementById('teamBControls');
   teamAControls.innerHTML = '';
   teamBControls.innerHTML = '';
 
-  // Populate controls based on sport
+  // For race sports (track & field events), use participants table instead of point buttons
+  const teamBlocksContainer = document.getElementById('teamBlocksContainer');
+  const raceArea = document.getElementById('raceArea');
+  
+  if(isRaceSport(sport)){
+    // Show race area and hide team blocks for race sports
+    if(raceArea) raceArea.style.display = 'block';
+    if(teamBlocksContainer) teamBlocksContainer.style.display = 'none';
+    initRaceUIForMatch(m);
+  } else {
+    // Hide race area and show team blocks for non-race sports
+    if(raceArea) raceArea.style.display = 'none';
+    if(teamBlocksContainer) teamBlocksContainer.style.display = 'flex';
+  }
+
+  // Populate controls based on sport (non-race sports keep button layout)
   switch(sport){
     case 'basketball':
       createScoreButton('+1 (FT)', 'A', 1, teamAControls);
@@ -4283,6 +4356,153 @@ async function openScoreSheet(matchId){
   document.getElementById('scoreSheet').classList.add('show');
 }
 
+// ===== Race (100m / 200m) helpers =====
+function getRaceElements(){
+  return {
+    area: document.getElementById('raceArea'),
+    countInput: document.getElementById('raceParticipantCount'),
+    applyBtn: document.getElementById('raceApplyCount'),
+    tableBody: (function(){
+      const tbl = document.getElementById('raceTable');
+      return tbl ? tbl.querySelector('tbody') : null;
+    })()
+  };
+}
+
+function normalizeRaceParticipants(arr){
+  return (arr || []).map((p,idx)=>({
+    index: idx,
+    school: (p && p.school) || '',
+    name: (p && p.name) || '',
+    rank: typeof p.rank === 'number' ? p.rank : null
+  }));
+}
+
+function buildRaceTableFromState(){
+  const {area,countInput,tableBody} = getRaceElements();
+  if(!area || !countInput || !tableBody) return;
+  const count = Math.min(RACE_MAX_PARTICIPANTS, Math.max(RACE_MIN_PARTICIPANTS, currentRaceParticipants.length || RACE_MIN_PARTICIPANTS));
+  if(currentRaceParticipants.length < count){
+    for(let i=currentRaceParticipants.length;i<count;i++) currentRaceParticipants.push({school:'',name:'',rank:null});
+  } else if(currentRaceParticipants.length > count){
+    currentRaceParticipants = currentRaceParticipants.slice(0,count);
+  }
+  countInput.value = String(count);
+  const rows = currentRaceParticipants.map((p,idx)=>{
+    const safeSchool = escapeHtml(p.school||'');
+    const safeName = escapeHtml(p.name||'');
+    const r = (p.rank===1||p.rank===2||p.rank===3)?p.rank:'';
+    const rowBg = idx % 2 === 0 ? 'background:#ffffff;' : 'background:#f9fafb;';
+    return `<tr style="${rowBg}">
+      <td style="padding:12px 14px;border-bottom:1px solid #e5e7eb;font-weight:500;color:#6b7280;">${idx+1}</td>
+      <td style="padding:12px 14px;border-bottom:1px solid #e5e7eb;"><input data-race-index="${idx}" data-race-field="school" value="${safeSchool}" style="width:100%;padding:8px 10px;border-radius:6px;border:1px solid rgba(209,213,219,1);font-size:13px;transition:border-color 0.2s;" /></td>
+      <td style="padding:12px 14px;border-bottom:1px solid #e5e7eb;"><input data-race-index="${idx}" data-race-field="name" value="${safeName}" style="width:100%;padding:8px 10px;border-radius:6px;border:1px solid rgba(209,213,219,1);font-size:13px;transition:border-color 0.2s;" /></td>
+      <td style="padding:12px 14px;border-bottom:1px solid #e5e7eb;">
+        <select data-race-index="${idx}" data-race-field="rank" style="width:100%;padding:8px 10px;border-radius:6px;border:1px solid rgba(209,213,219,1);font-size:13px;background:white;transition:border-color 0.2s;">
+          <option value="">—</option>
+          <option value="1" ${r===1?'selected':''}>1</option>
+          <option value="2" ${r===2?'selected':''}>2</option>
+          <option value="3" ${r===3?'selected':''}>3</option>
+        </select>
+      </td>
+    </tr>`;
+  }).join('');
+  tableBody.innerHTML = rows;
+
+  // Wire change handlers
+  Array.from(tableBody.querySelectorAll('input[data-race-index],select[data-race-index]')).forEach(el=>{
+    el.addEventListener('change', onRaceCellChange);
+  });
+}
+
+function onRaceCellChange(e){
+  const el = e.target;
+  const idx = parseInt(el.getAttribute('data-race-index')||'-1',10);
+  const field = el.getAttribute('data-race-field');
+  if(idx<0 || !field || !currentRaceParticipants[idx]) return;
+  if(field === 'rank'){
+    const v = el.value ? parseInt(el.value,10) : null;
+    currentRaceParticipants[idx].rank = (v===1||v===2||v===3)?v:null;
+  } else if(field === 'school'){
+    currentRaceParticipants[idx].school = el.value || '';
+  } else if(field === 'name'){
+    currentRaceParticipants[idx].name = el.value || '';
+  }
+  saveRaceParticipantsToMatch();
+}
+
+function saveRaceParticipantsToMatch(){
+  if(!activeMatchId || !rtdb) return;
+  const ref = rtdb.ref(`matches/${activeMatchId}`);
+  const payload = normalizeRaceParticipants(currentRaceParticipants);
+  ref.update({
+    raceParticipants: payload,
+    raceParticipantCount: payload.length
+  }).catch(()=>{});
+}
+
+function prefillRaceWinnersForNewMatch(match){
+  if(!rtdb || !match || !isRaceSport(match.sport)) return;
+  // Only prefill if there are no participants yet
+  if(Array.isArray(match.raceParticipants) && match.raceParticipants.length>0) return;
+  const sportKey = match.sport;
+  const ageKey = match.age || 'all';
+  rtdb.ref(`raceWinners/${sportKey}/${ageKey}`).once('value').then(snap=>{
+    const data = snap.val();
+    const winners = Array.isArray(data && data.winners) ? data.winners : [];
+    if(!winners.length) return;
+    // Carry forward previous winners as first rows with cleared ranks
+    currentRaceParticipants = winners.map(w=>({
+      school: w.school || '',
+      name: w.name || '',
+      rank: null
+    }));
+    buildRaceTableFromState();
+    saveRaceParticipantsToMatch();
+  }).catch(()=>{});
+}
+
+function initRaceUIForMatch(match){
+  const {area,countInput,applyBtn} = getRaceElements();
+  if(!area || !countInput) return;
+  const sport = String(match.sport || '').toLowerCase().trim();
+  if(!isRaceSport(sport)){
+    area.style.display = 'none';
+    return;
+  }
+  area.style.display = 'block';
+
+  if(Array.isArray(match.raceParticipants) && match.raceParticipants.length){
+    currentRaceParticipants = normalizeRaceParticipants(match.raceParticipants);
+  } else {
+    currentRaceParticipants = [];
+    prefillRaceWinnersForNewMatch(match);
+  }
+
+  if(!currentRaceParticipants.length){
+    currentRaceParticipants = new Array(RACE_MIN_PARTICIPANTS).fill(0).map(()=>({school:'',name:'',rank:null}));
+  }
+
+  buildRaceTableFromState();
+
+  if(applyBtn && !applyBtn._raceBound){
+    applyBtn._raceBound = true;
+    applyBtn.addEventListener('click', ()=>{
+      const val = parseInt(countInput.value||String(RACE_MIN_PARTICIPANTS),10);
+      let n = Number.isFinite(val) ? val : RACE_MIN_PARTICIPANTS;
+      if(n < RACE_MIN_PARTICIPANTS) n = RACE_MIN_PARTICIPANTS;
+      if(n > RACE_MAX_PARTICIPANTS) n = RACE_MAX_PARTICIPANTS;
+      if(currentRaceParticipants.length < n){
+        for(let i=currentRaceParticipants.length;i<n;i++) currentRaceParticipants.push({school:'',name:'',rank:null});
+      } else if(currentRaceParticipants.length > n){
+        currentRaceParticipants = currentRaceParticipants.slice(0,n);
+      }
+      buildRaceTableFromState();
+      saveRaceParticipantsToMatch();
+    });
+  }
+}
+
 function updateScoreSheetLive(m){
   document.getElementById('teamAScore').innerText = m.scoreA||0;
   document.getElementById('teamBScore').innerText = m.scoreB||0;
@@ -4296,6 +4516,21 @@ function updateScoreSheetLive(m){
   } else {
     const area = document.getElementById('volleyballSetsArea');
     if(area) area.style.display = 'none';
+  }
+  // For race sports, refresh participants table from match data
+  const sport = String(m.sport || '').toLowerCase().trim();
+  const teamBlocksContainer = document.getElementById('teamBlocksContainer');
+  const raceArea = document.getElementById('raceArea');
+  
+  if(isRaceSport(sport)){
+    // Show race area and hide team blocks for race sports
+    if(raceArea) raceArea.style.display = 'block';
+    if(teamBlocksContainer) teamBlocksContainer.style.display = 'none';
+    initRaceUIForMatch(m);
+  } else {
+    // Hide race area and show team blocks for non-race sports
+    if(raceArea) raceArea.style.display = 'none';
+    if(teamBlocksContainer) teamBlocksContainer.style.display = 'flex';
   }
 }
 
@@ -4753,6 +4988,29 @@ function finalizeMatchObject(match, now){
   return match;
 }
 
+function extractRaceWinners(match){
+  if(!match || !Array.isArray(match.raceParticipants)) return [];
+  return match.raceParticipants
+    .filter(p => p && (p.rank === 1 || p.rank === 2 || p.rank === 3))
+    .map(p => ({ school: p.school || '', name: p.name || '', rank: p.rank }))
+    .sort((a,b)=> (a.rank||99) - (b.rank||99));
+}
+
+function saveRaceWinnersGlobal(matchId, match){
+  if(!rtdb || !match || !isRaceSport(match.sport)) return;
+  const winners = extractRaceWinners(match);
+  if(!winners.length) return;
+  const sportKey = match.sport;
+  const ageKey = match.age || 'all';
+  const now = Date.now();
+  const ref = rtdb.ref(`raceWinners/${sportKey}/${ageKey}`);
+  ref.set({
+    winners,
+    fromMatchId: matchId,
+    updatedAt: now
+  }).catch(()=>{});
+}
+
 // Allow admins to finish any match directly from the Matches tab
 async function adminFinishMatch(matchId){
   if(!matchId) return;
@@ -4790,6 +5048,8 @@ async function adminFinishMatch(matchId){
       return;
     }
     if(committed && snapshot){
+      const finished = snapshot.val();
+      if(finished) saveRaceWinnersGlobal(matchId, finished);
       // If this match is currently open in the score sheet, close it
       if(activeMatchId === matchId){
         const sheet = document.getElementById('scoreSheet');
@@ -4813,7 +5073,9 @@ document.getElementById('finishMatch').addEventListener('click', async ()=>{
       console.error('finishMatch transaction failed', err);
       return;
     }
-    if(committed){
+    if(committed && snapshot){
+      const finished = snapshot.val();
+      if(finished) saveRaceWinnersGlobal(activeMatchId, finished);
       document.getElementById('statusLabel').innerText = 'FINISHED';
       document.getElementById('scoreSheet').classList.remove('show');
       activeMatchId = null;
